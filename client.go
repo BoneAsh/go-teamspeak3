@@ -79,7 +79,11 @@ func (c *Client) Loop() {
 		if strings.HasPrefix(r, "error") {
 			c.errorPipe <- NewError(r)
 		} else if strings.HasPrefix(r, "notify") {
-			c.notifyPipe <- NewNotify(r)
+			n, err := NewNotify(r)
+			if err != nil {
+				continue
+			}
+			c.notifyPipe <- n
 		} else {
 			builder.Reset()
 			builder.WriteString(r)
