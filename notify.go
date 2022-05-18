@@ -55,7 +55,7 @@ type NotifyClientEnterView struct {
 	ClientUniqueIdentifier               string      `mapstructure:"client_unique_identifier"`
 	ClientNickname                       string      `mapstructure:"client_nickname"`
 	ClientInputMuted                     int         `mapstructure:"client_input_muted"`
-	ClientOuputMuted                     int         `mapstructure:"client_ouput_muted"`
+	ClientOutputMuted                    int         `mapstructure:"client_output_muted"`
 	ClientOutputOnlyMuted                int         `mapstructure:"client_outputonly_muted"`
 	ClientInputHardware                  int         `mapstructure:"client_input_hardware"`
 	ClientOutputHardWare                 int         `mapstructure:"client_output_hardware"`
