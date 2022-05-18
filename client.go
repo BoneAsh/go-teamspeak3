@@ -52,7 +52,7 @@ func NewClient(t Type, host string, port int, username string, password string) 
 		return nil, errors.New("title check failed")
 	}
 	<-responsePipe
-	go client.Loop()
+	go client.loop()
 	return client, nil
 }
 
@@ -72,12 +72,17 @@ func (c *Client) Close() (err error) {
 	return nil
 }
 
-func (c *Client) Loop() {
+func (c *Client) loop() {
 	var builder strings.Builder
 	for {
 		r := <-c.responsePipe
 		if strings.HasPrefix(r, "error") {
-			c.errorPipe <- NewError(r)
+			c.messagePipe <- Message{}
+			e, err := NewError(r)
+			if err != nil {
+				continue
+			}
+			c.errorPipe <- e
 		} else if strings.HasPrefix(r, "notify") {
 			n, err := NewNotify(r)
 			if err != nil {
@@ -90,8 +95,16 @@ func (c *Client) Loop() {
 			for {
 				r = <-c.responsePipe
 				if strings.HasPrefix(r, "error") {
-					c.messagePipe <- NewMessage(builder.String())
-					c.errorPipe <- NewError(r)
+					m, err := NewMessage(builder.String())
+					if err != nil {
+						continue
+					}
+					c.messagePipe <- m
+					e, err := NewError(r)
+					if err != nil {
+						continue
+					}
+					c.errorPipe <- e
 					break
 				} else {
 					builder.WriteString(r)
@@ -99,4 +112,18 @@ func (c *Client) Loop() {
 			}
 		}
 	}
+}
+
+func (c *Client) Command(content string) (response Message, error Error) {
+	err := c.query.Request(content)
+	if err != nil {
+		return Message{}, Error{Id: -1, Msg: err.Error()}
+	}
+	response = <-c.messagePipe
+	error = <-c.errorPipe
+	return
+}
+
+func (c *Client) Notification() <-chan Notify {
+	return c.notifyPipe
 }
